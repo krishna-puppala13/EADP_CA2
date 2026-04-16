@@ -43,15 +43,53 @@ jobs:
         run: terraform init
 
       
-
       - name: Terraform Apply
         run: terraform apply -auto-approve
 
+      # Install monitoring 
+      - name: Add Helm Repo
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo update
+
+      - name: Install Monitoring Stack
+        run: |
+          helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+            --set grafana.adminPassword=admin123 \
+            --set grafana.service.type=NodePort \
+            --set grafana.service.nodePort=30000 \
+            --set prometheus.service.type=NodePort \
+            --set prometheus.service.nodePort=30001
+
       - name: Check Backend Deployment
-        run: kubectl rollout status deployment/backend --timeout=20s
-      - name: Check frontend Deployment
+        run: kubectl rollout status deployment/backend --timeout=60s
+
+      - name: Check Frontend Deployment
         run: kubectl rollout status deployment/frontend --timeout=60s
 
-      # Verify deployment
+      # Logs (basic monitoring)
+      - name: Backend Logs
+        run: kubectl logs -l app=backend --tail=20
+
+      - name: Frontend Logs
+        run: kubectl logs -l app=frontend --tail=20
+
+      # Show Minikube IP
+      - name: Get Minikube IP
+        run: minikube ip
+
+      # Show access links
+      - name: Show Monitoring Access
+        run: |
+          echo "========== MONITORING =========="
+          echo "Grafana:"
+          echo "http://$(minikube ip):30000"
+          echo "Username: admin"
+          echo "Password: admin123"
+          echo ""
+          echo "Prometheus:"
+          echo "http://$(minikube ip):30001"
+          echo "================================"
+
       - name: Check Pods
         run: kubectl get pods
