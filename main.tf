@@ -38,3 +38,11 @@ resource "kubernetes_manifest" "frontend" {
 resource "kubernetes_manifest" "frontend_service" {
   manifest = yamldecode(file("${path.module}/k8s/frontend-service.yaml"))
 }
+
+resource "kubernetes_manifest" "backend_hpa" {
+  manifest = yamldecode(file("${path.module}/k8s/backend-hpa.yaml"))
+}
+
+resource "kubernetes_manifest" "frontend_hpa" {
+  manifest = yamldecode(file("${path.module}/k8s/frontend-hpa.yaml"))
+}
