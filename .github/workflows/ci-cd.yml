@@ -34,13 +34,15 @@ jobs:
       # Verify cluster
       - name: Check Kubernetes
         run: kubectl get nodes
+      - name: Clean Kubernetes Resources
+        run: |
+            kubectl delete -f k8s/ --ignore-not-found=true
 
       # Terraform
       - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+      
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
