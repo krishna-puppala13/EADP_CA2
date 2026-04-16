@@ -51,6 +51,7 @@ jobs:
       # Verify cluster
       - name: Check Kubernetes
         run: kubectl get nodes
+        
       - name: Terraform Init
         run: terraform init -reconfigure
 
