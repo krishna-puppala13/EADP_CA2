@@ -52,12 +52,3 @@ resource "kubernetes_manifest" "backend_hpa" {
 resource "kubernetes_manifest" "frontend_hpa" {
   manifest = yamldecode(file("${path.module}/k8s/frontend-hpa.yaml"))
 }
-
-resource "kubernetes_manifest" "ingress" {
-  manifest = yamldecode(file("${path.module}/k8s/ingress.yaml"))
-
-  depends_on = [
-    kubernetes_manifest.backend_service,
-    kubernetes_manifest.frontend_service
-  ]
-}
