@@ -24,12 +24,6 @@ jobs:
       - name: Build Frontend Image
         run: docker build -t krishnapuppala20/frontend:lat ./FRONT_END
 
-      # Push images
-      - name: Push Backend
-        run: docker push krishnapuppala20/backend:lat
-
-      - name: Push Frontend
-        run: docker push krishnapuppala20/frontend:lat
       - name: Install Trivy
         run: choco install trivy -y
 
@@ -46,6 +40,13 @@ jobs:
             path: |
                 backend-report.txt
                 frontend-report.txt
+
+      # Push images
+      - name: Push Backend
+        run: docker push krishnapuppala20/backend:lat
+
+      - name: Push Frontend
+        run: docker push krishnapuppala20/frontend:lat
 
       # Verify cluster
       - name: Check Kubernetes
