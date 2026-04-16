@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: krishnapuppala20/backend:v3
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DATABASE_URL
+              value: "mongodb://mongodb:27017"
+            - name: DATABASE_NAME
+              value: "ead_ca2"
+            - name: DATABASE_COLLECTION
+              value: "ead_2024"

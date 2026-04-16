@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: krishnapuppala20/frontend:v4
+          ports:
+            - containerPort: 22137
+          env:
+            - name: WEBSERVICE_HOST
+              value: "backend"
