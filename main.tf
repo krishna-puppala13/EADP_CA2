@@ -2,6 +2,11 @@ provider "kubernetes" {
   config_path = "~/.kube/config"
 }
 
+terraform {
+  backend "local" {
+    path = "C:/terraform-state/ca2.tfstate"
+  }
+}
 
 # MongoDB PVC
 resource "kubernetes_manifest" "mongo_pvc" {
