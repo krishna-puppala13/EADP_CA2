@@ -4,10 +4,9 @@ metadata:
   name: frontend
   namespace: default
 spec:
-  type: NodePort
+  type: clusterIP
   selector:
     app: frontend
   ports:
-    - port: 22137
-      targetPort: 22137
-      nodePort: 30007
+    - port: 80
+      targetPort: 3000
