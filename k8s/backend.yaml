@@ -16,6 +16,11 @@ spec:
       containers:
         - name: backend
           image: krishnapuppala20/backend:lat
+          resources:
+            requests:
+              cpu: "100m"
+            limits:
+              cpu: "200m"
           ports:
             - containerPort: 8080
           env:

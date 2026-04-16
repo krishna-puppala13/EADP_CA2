@@ -16,6 +16,11 @@ spec:
       containers:
         - name: frontend
           image: krishnapuppala20/frontend:lat
+          resources:
+            requests:
+              cpu: "50m"
+            limits:
+              cpu: "100m"
           ports:
             - containerPort: 22137
           env:
