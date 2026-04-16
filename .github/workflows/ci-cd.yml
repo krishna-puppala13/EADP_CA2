@@ -1,0 +1,48 @@
+name: CI-CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # Docker login
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      # Build backend
+      - name: Build Backend Image
+        run: docker build -t krishnapuppala20/backend:lat ./BACK_END
+
+      # Build frontend
+      - name: Build Frontend Image
+        run: docker build -t krishnapuppala20/frontend:lat ./FRONT_END
+
+      # Push images
+      - name: Push Backend
+        run: docker push krishnapuppala20/backend:lat
+
+      - name: Push Frontend
+        run: docker push krishnapuppala20/frontend:lat
+
+      # Verify cluster
+      - name: Check Kubernetes
+        run: kubectl get nodes
+
+      # Terraform
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+
+      # Verify deployment
+      - name: Check Pods
+        run: kubectl get pods

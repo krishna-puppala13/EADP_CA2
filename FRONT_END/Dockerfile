@@ -2,12 +2,8 @@ FROM node:18
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY . .
 
 RUN npm install
 
-COPY . .
-
-EXPOSE 22137
-
-CMD ["npm", "start"]
+CMD ["node", "fe-server.js"]

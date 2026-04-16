@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
+  namespace: default
 spec:
   replicas: 1
   selector:
@@ -14,7 +15,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: krishnapuppala20/backend:v3
+          image: krishnapuppala20/backend:lat
           ports:
             - containerPort: 8080
           env:
