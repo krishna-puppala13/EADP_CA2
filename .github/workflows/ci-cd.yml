@@ -6,23 +6,21 @@ on:
       - main
 
 jobs:
-
-  # ─────────────────────────────
-  # JOB 1: BUILD + SCAN + PUSH
-  # ─────────────────────────────
-  build-scan-push:
+  deploy:
     runs-on: self-hosted
 
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
+      # Docker login
       - name: Login to Docker Hub
         run: docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
-
+      # Build backend
       - name: Build Backend Image
         run: docker build -t krishnapuppala20/backend:lat ./BACK_END
 
+      # Build frontend
       - name: Build Frontend Image
         run: docker build -t krishnapuppala20/frontend:lat ./FRONT_END
 
@@ -38,32 +36,21 @@ jobs:
       - name: Upload Trivy Reports
         uses: actions/upload-artifact@v4
         with:
-          name: trivy-reports
-          path: |
-            backend-report.txt
-            frontend-report.txt
+            name: trivy-reports
+            path: |
+                backend-report.txt
+                frontend-report.txt
 
+      # Push images
       - name: Push Backend
         run: docker push krishnapuppala20/backend:lat
 
       - name: Push Frontend
         run: docker push krishnapuppala20/frontend:lat
 
-
-  # ─────────────────────────────
-  # JOB 2: TERRAFORM
-  # ─────────────────────────────
-  terraform:
-    runs-on: self-hosted
-    needs: build-scan-push
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
+      # Verify cluster
       - name: Check Kubernetes
         run: kubectl get nodes
-
       - name: Terraform Init
         run: terraform init -reconfigure
 
@@ -73,51 +60,7 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
 
-
-  # ─────────────────────────────
-  # JOB 3: ROLLOUT + VALIDATION + ROLLBACK
-  # ─────────────────────────────
-  rollout-validate:
-    runs-on: self-hosted
-    needs: terraform
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Deploy Backend (with rollback)
-        run: |
-          kubectl rollout status deployment/backend --timeout=60s
-          if ($LASTEXITCODE -ne 0) {
-            echo "Backend deployment failed. Rolling back..."
-            kubectl rollout undo deployment/backend
-            exit 1
-          }
-
-      - name: Deploy Frontend (with rollback)
-        run: |
-          kubectl rollout status deployment/frontend --timeout=60s
-          if ($LASTEXITCODE -ne 0) {
-            echo "Frontend deployment failed. Rolling back..."
-            kubectl rollout undo deployment/frontend
-            exit 1
-          }
-
-      - name: Check Pods
-        run: kubectl get pods
-
-
-  # ─────────────────────────────
-  # JOB 4: MONITORING
-  # ─────────────────────────────
-  monitoring:
-    runs-on: self-hosted
-    needs: rollout-validate
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
+      # Install monitoring (Prometheus + Grafana)
       - name: Add Helm Repo
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -126,6 +69,33 @@ jobs:
       - name: Install Monitoring Stack
         run: helm upgrade --install monitoring prometheus-community/kube-prometheus-stack --set grafana.adminPassword=admin123
 
+      # Validate deployment
+      - name: Deploy Backend (with rollback)
+        run: |
+            kubectl rollout status deployment/backend --timeout=60s
+            if ($LASTEXITCODE -ne 0) {
+            echo "Backend deployment failed. Rolling back..."
+            kubectl rollout undo deployment/backend
+            exit 1
+            }
+
+      - name: Deploy Frontend (with rollback)
+        run: |
+            kubectl rollout status deployment/frontend --timeout=60s
+            if ($LASTEXITCODE -ne 0) {
+            echo "Frontend deployment failed. Rolling back..."
+            kubectl rollout undo deployment/frontend
+            exit 1
+            }   
+
+      # Logs
+      - name: Backend Logs
+        run: kubectl logs -l app=backend --tail=20
+
+      - name: Frontend Logs
+        run: kubectl logs -l app=frontend --tail=20
+
+      # Show monitoring access (FIXED)
       - name: Show Monitoring Access
         run: |
           echo "========== MONITORING =========="
@@ -135,3 +105,7 @@ jobs:
           echo "Run this command to open Prometheus:"
           echo "minikube service monitoring-kube-prometheus-prometheus"
           echo "================================"
+
+      # Final check
+      - name: Check Pods
+        run: kubectl get pods
