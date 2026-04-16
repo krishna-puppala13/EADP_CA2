@@ -2,6 +2,7 @@ provider "kubernetes" {
   config_path = "~/.kube/config"
 }
 
+
 # MongoDB PVC
 resource "kubernetes_manifest" "mongo_pvc" {
   manifest = yamldecode(file("${path.module}/k8s/mongo-pvc.yaml"))
