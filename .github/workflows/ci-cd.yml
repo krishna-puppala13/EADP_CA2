@@ -30,6 +30,22 @@ jobs:
 
       - name: Push Frontend
         run: docker push krishnapuppala20/frontend:lat
+      - name: Install Trivy
+        run: choco install trivy -y
+
+      - name: Scan Backend Image
+        run: trivy image --format table -o backend-report.txt krishnapuppala20/backend:lat
+
+      - name: Scan Frontend Image
+        run: trivy image --format table -o frontend-report.txt krishnapuppala20/frontend:lat
+
+      - name: Upload Trivy Reports
+        uses: actions/upload-artifact@v4
+        with:
+            name: trivy-reports
+            path: |
+                backend-report.txt
+                frontend-report.txt
 
       # Verify cluster
       - name: Check Kubernetes
@@ -46,43 +62,40 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve
 
-      # Install monitoring 
+      # Install monitoring (Prometheus + Grafana)
       - name: Add Helm Repo
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
           helm repo update
 
       - name: Install Monitoring Stack
-        run: helm upgrade --install monitoring prometheus-community/kube-prometheus-stack --set grafana.adminPassword=admin123 --set grafana.service.type=NodePort --set grafana.service.nodePort=30000 --set prometheus.service.type=NodePort --set prometheus.service.nodePort=30001
+        run: helm upgrade --install monitoring prometheus-community/kube-prometheus-stack --set grafana.adminPassword=admin123
 
-
+      # Validate deployment
       - name: Check Backend Deployment
-        run: kubectl rollout status deployment/backend --timeout=60s
+        run: kubectl rollout status deployment/backend --timeout=30s
 
       - name: Check Frontend Deployment
-        run: kubectl rollout status deployment/frontend --timeout=60s
+        run: kubectl rollout status deployment/frontend --timeout=30s
 
-
+      # Logs
       - name: Backend Logs
         run: kubectl logs -l app=backend --tail=20
 
       - name: Frontend Logs
         run: kubectl logs -l app=frontend --tail=20
 
-
-      - name: Get Minikube IP
-        run: minikube ip
-
-
+      # Show monitoring access (FIXED)
       - name: Show Monitoring Access
         run: |
           echo "========== MONITORING =========="
-          echo "Grafana: http://$(minikube ip):30000"
-          echo "Username: admin"
-          echo "Password: admin123"
+          echo "Run this command to open Grafana:"
+          echo "minikube service monitoring-grafana"
           echo ""
-          echo "Prometheus: http://$(minikube ip):30001"
+          echo "Run this command to open Prometheus:"
+          echo "minikube service monitoring-kube-prometheus-prometheus"
           echo "================================"
 
+      # Final check
       - name: Check Pods
         run: kubectl get pods
