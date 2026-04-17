@@ -3,6 +3,10 @@ kind: Service
 metadata:
   name: frontend
   namespace: default
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "22137"
+    prometheus.io/path: "/metrics"
 spec:
   type: NodePort
   selector:
