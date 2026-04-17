@@ -96,7 +96,7 @@ jobs:
       - name: Frontend Logs
         run: kubectl logs -l app=frontend --tail=20
 
-      # Show monitoring access (FIXED)
+      # Show monitoring access 
       - name: Show Monitoring Access
         run: |
           echo "========== MONITORING =========="
